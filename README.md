@@ -2,13 +2,13 @@
 
 # Home.
 
-A private household management application for shared chores, payments and shopping.
+A household management application for shared chores, payments and shopping, with private household spaces.
 
 **Status:** Planning. No application code or deployment exists yet.
 
 ## Purpose
 
-Home. gives three residents a shared overview of what needs doing, what needs paying and what needs buying. The application should reduce everyday coordination, not create extra administrative work.
+Home. gives members of any household a shared overview of what needs doing, what needs paying and what needs buying. The application should reduce everyday coordination, not create extra administrative work.
 
 The developers share responsibility for product decisions, implementation and review. Features should solve actual household problems and be easy for every resident to use.
 
@@ -18,11 +18,11 @@ The developers share responsibility for product decisions, implementation and re
 | --- | --- |
 | Home | Upcoming responsibilities and outstanding payments |
 | Chores | Recurring assignments, rotation, completion and swaps |
-| Payments | Individual shares, deadlines and payment confirmation |
+| Payments | Rent, bills, shared purchases, flexible splits and reimbursements |
 | Shopping | Shared, editable shopping list |
-| Accounts | Invite-only access and individual notification preferences |
+| Accounts | Public email registration, verification through Resend, household creation and invitations |
 
-Calendar, expense settlement, buffer tracking, maintenance and move-out planning are candidates for later releases.
+Calendar, buffer tracking, maintenance and move-out planning are candidates for later releases.
 
 ## Interface
 
@@ -47,6 +47,7 @@ The proposed platform is a Progressive Web App (PWA), accessible in a browser or
 | Frontend | React, TypeScript, Vite |
 | Backend | PocketBase |
 | Database | SQLite |
+| Transactional email | Resend (existing account) |
 | Hosting | Self-hosted Proxmox, HTTPS |
 | Collaboration | GitHub issues, branches and pull requests |
 | Deployment | GitHub Actions, after approval |
@@ -56,7 +57,7 @@ These are proposals, not finalized technical decisions. See [architecture](docs/
 ## Development roadmap
 
 1. Agree on the scope, design, stack and permissions.
-2. Establish authentication, navigation and shared UI components.
+2. Establish verified registration, household creation, invitations and shared UI components.
 3. Implement chores, payments, shopping and dashboard.
 4. Add installability, reminders and operational safeguards.
 5. Test with all residents before deployment.
@@ -93,7 +94,7 @@ Coding agents must read [AGENTS.md](AGENTS.md) and the linked project documentat
 
 ## Privacy
 
-Keep the repository private. Never commit real household records, financial credentials, secrets or signed contracts. The application must enforce authorization on the server and support reliable backups.
+Keep the repository private. Public registration does not make household data public. Never commit real household records, financial credentials, secrets or signed contracts. The application must enforce authorization on the server and support reliable backups.
 
 ## References
 
