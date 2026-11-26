@@ -2,104 +2,71 @@
 
 # Home.
 
-A household management application for shared chores, payments and shopping, with private household spaces.
+A household application for shared chores, expenses and shopping. Anyone can register, verify their email and create a private household or accept an invitation.
 
-**Status:** Planning. No application code or deployment exists yet.
+**Status:** First working self-hosted release. Accounts, household permissions and the core workflows are implemented. Test with your residents before relying on the ledger for real obligations.
 
-## Purpose
+## What you can do
 
-Home. gives members of any household a shared overview of what needs doing, what needs paying and what needs buying. The application should reduce everyday coordination, not create extra administrative work.
-
-The developers share responsibility for product decisions, implementation and review. Features should solve actual household problems and be easy for every resident to use.
-
-## Product scope
-
-| Feature | Planned behavior |
+| Area | Working behavior |
 | --- | --- |
-| Home | Upcoming responsibilities and outstanding payments |
-| Chores | Recurring assignments, rotation, completion and swaps |
-| Payments | Rent, bills, shared purchases, flexible splits and reimbursements |
-| Shopping | Shared, editable shopping list |
-| Accounts | Public email registration, verification through Resend, household creation and invitations |
+| Accounts | Public registration, email verification, sign-in, password reset, sign-out and reminder preferences |
+| Households | Create and switch households; email invitations; owner, administrator and member roles; revocation; ownership transfer and guarded departure |
+| Chores | One-off or recurring chores, rotating assignments, completion history and accepted swaps |
+| Payments | Purchases and monthly bills; equal, percentage or fixed splits; private receipts; partial repayments and receipt confirmation |
+| Shopping | Shared editable list, quantities, checked items and clear-checked action |
+| Home | Assigned chores, amounts owed, payments to confirm and shopping items |
+| Email | Resend verification, password resets, invitations and opt-in daily due reminders through a separate worker |
+| Data | Household export, activity history and SQLite backups including receipts |
+| Installation | Mobile and desktop layout, dark mode, PWA manifest and static offline shell |
 
-Calendar, buffer tracking, maintenance and move-out planning are candidates for later releases.
+Payments record money sent outside the app. Home does not connect to banks or move money. Sent and receipt confirmed are distinct states. Every share uses integer øre; rounding preserves the exact total.
 
-## Interface
+## Using Home
 
-![Mobile concepts for home, payments and expense splitting](docs/design/dashboard.svg)
+Create an account and verify your email, then sign in. Create a household under your chosen name, or open an invitation sent to the email you registered with. Invite other residents in Settings. Each household has its own chores, shopping list and ledger.
 
-*Concepts with illustrative data. Not screenshots of an implemented application.*
+Use **Add expense** for furniture, groceries and other shared purchases. Choose **Bill to be paid** for rent or utilities collected by a household member; the optional monthly setting creates future bills. Select participants and check the split preview before saving. After sending money using your bank or payment app, mark the amount as sent; the recipient confirms it.
 
-![Registration, email verification and household creation](docs/design/onboarding.svg)
+Install on iPhone through Safari → Share → Add to Home Screen, or use the browser's install option on Android and desktop. Data changes need connectivity. Private records are never stored in the service-worker cache.
 
-The design is mobile-first and deliberately restrained: meaningful headings, readable lists, consistent spacing, clear actions and minimal copy. No marketing slogans, decorative gradients or redundant labels. Accessibility and desktop usability are part of the baseline.
+## Development
 
-See [design guidelines](docs/DESIGN.md) and [product requirements](docs/PRODUCT.md).
+Requires Node.js 24+. There are no runtime npm dependencies or frontend build step.
 
-## Technical direction
+```sh
+git clone https://github.com/08Robfin/home.git
+cd home
+node backend/server.mjs
+```
 
-The proposed platform is a Progressive Web App (PWA), accessible in a browser or installed on a phone's home screen without an app store.
+Open `http://localhost:3000`. Development data is stored in ignored `data/home.sqlite`. Starting the web app alone does not send emails. All test email calls are mocked:
 
-![Browser and installed PWA comparison](docs/design/pwa.svg)
+```sh
+node --test tests/*.test.mjs
+```
 
-![Proposed system architecture](docs/design/architecture.svg)
+The integration suite exercises real HTTP routes against an isolated database, including token reuse, household isolation, invitation ownership, chore rotation and swaps, repayment confirmation, private receipts, recurring bills, reminders, shopping, CSRF rejection and mail retries.
 
-| Component | Proposal |
-| --- | --- |
-| Frontend | React, TypeScript, Vite |
-| Backend | PocketBase |
-| Database | SQLite |
-| Transactional email | Resend (existing account) |
-| Hosting | Self-hosted Proxmox, HTTPS |
-| Collaboration | GitHub issues, branches and pull requests |
-| Deployment | GitHub Actions, after approval |
+## Deployment and privacy
 
-These are proposals, not finalized technical decisions. See [architecture](docs/ARCHITECTURE.md) and [decision log](docs/DECISIONS.md).
+Use the Docker Compose template behind Nginx Proxy Manager. Keep the real `.env` and Resend sending credential on the server, outside source control. Only the mail worker receives the credential; the web container and browser do not. TLS, cookie security, input validation, backend authorization and persistent rate limits are part of the implementation.
 
-## Development roadmap
-
-1. Agree on the scope, design, stack and permissions.
-2. Establish verified registration, household creation, invitations and shared UI components.
-3. Implement chores, payments, shopping and dashboard.
-4. Add installability, reminders and operational safeguards.
-5. Test with all residents before deployment.
-
-See the [roadmap](docs/ROADMAP.md) for the complete checklist.
+See [operations](docs/OPERATIONS.md) for configuration, backups, restoration, updates and current boundaries. Run `python3 scripts/backup.py /absolute/private/backup-directory` on the Docker host for a verified online snapshot with 30-day retention. Keep off-server backups for disaster recovery.
 
 ## Repository guide
 
 | Path | Contents |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Instructions for AI coding agents |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, review and collaboration |
-| [docs/](docs/) | Requirements, architecture, design, roadmap and decisions |
-| [docs/design/](docs/design/) | Logo, icon and editable SVG wireframes |
-| [frontend/](frontend/) | Reserved for future frontend |
-| [backend/](backend/) | Reserved for future backend |
-| [.github/](.github/) | Issue and pull request templates |
+| [frontend/](frontend/) | Browser interface, icons, PWA and stylesheet |
+| [backend/](backend/) | HTTP API, SQLite schema, domain rules and email worker |
+| [tests/](tests/) | Isolated domain and HTTP integration tests |
+| [scripts/](scripts/) | Server backup helper |
+| [docs/PRODUCT.md](docs/PRODUCT.md) | Shared product requirements |
+| [docs/DESIGN.md](docs/DESIGN.md) | Interface conventions |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Implemented architecture and boundaries |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Deployment and recovery |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Completed work and remaining scope |
+| [AGENTS.md](AGENTS.md) | Coding-agent instructions |
 
-## Getting started
-
-Clone the repository to review or propose changes:
-
-```sh
-git clone https://github.com/08Robfin/home.git
-cd home
-git switch -c docs/your-proposal
-```
-
-There are no dependencies to install or services to run at this stage. Open an issue or pull request to discuss changes.
-
-## AI-assisted development
-
-Coding agents must read [AGENTS.md](AGENTS.md) and the linked project documentation before making changes. AI assistance does not replace human review. Do not scaffold the application until the maintainers approve implementation.
-
-## Privacy
-
-Keep the repository private. Public registration does not make household data public. Never commit real household records, financial credentials, secrets or signed contracts. The application must enforce authorization on the server and support reliable backups.
-
-## References
-
-The documentation follows the practical structure recommended in [GitHub's README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) and [Make a README](https://www.makeareadme.com/). Design references are collected in [docs/DESIGN.md](docs/DESIGN.md).
-
-No public license has been selected.
+The SVG screens under `docs/design` remain concepts with illustrative data. Account and household deletion, push notifications, offline editing, furniture ownership, calendar and maintenance tracking are not implemented. See the roadmap before expanding scope. No public license has been selected.

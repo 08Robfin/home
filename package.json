@@ -1,0 +1,5 @@
+{
+  "name": "home-household", "version": "1.0.0", "private": true, "type": "module",
+  "engines": {"node": ">=24.0.0"},
+  "scripts": {"start": "node backend/server.mjs", "worker": "node backend/worker.mjs", "test": "node --test tests/*.test.mjs"}
+}

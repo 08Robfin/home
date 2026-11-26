@@ -1,7 +1,7 @@
 # AI coding agent instructions
 
 ## Start here
-Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/ROADMAP.md and docs/DECISIONS.md. The repository is in planning only. Do not scaffold or implement anything unless explicitly requested. Treat proposed decisions as proposals, not requirements.
+Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/OPERATIONS.md, docs/ROADMAP.md and docs/DECISIONS.md. A first working release exists. Inspect the implemented architecture before making changes. Treat remaining proposals as proposals, not requirements.
 
 ## Working rules
 - Implement only the requested issue. Inspect existing code before changing it; keep changes small and reviewable.

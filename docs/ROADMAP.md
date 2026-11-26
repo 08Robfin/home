@@ -1,29 +1,26 @@
 # Roadmap
 
-## Phase 0: agreement
-- [ ] Review product scope with all residents.
-- [ ] Agree stack, hosting, language and navigation.
-- [ ] Review data visibility and payment rules.
-- [ ] Decide ownership and backup responsibilities.
+## Implemented in the first release
+- [x] Public registration, verified email, password reset and secure cookie sessions.
+- [x] Resend outbox, separate mail worker, retries and idempotency.
+- [x] Household creation and switching, invitations, role checks and guarded departures.
+- [x] Household isolation for records, participants, exports and receipts.
+- [x] Responsive navigation, empty/error states, dark mode and installable PWA shell.
+- [x] One-off and recurring chores, rotations, swaps and completion history.
+- [x] Purchases and monthly bills; selected participants; exact equal, percentage and fixed splits.
+- [x] Partial repayments with separate sent, confirmed and rejected states.
+- [x] Private receipts, household export and audit history.
+- [x] Shared shopping list with editing and checked-item clearing.
+- [x] Dashboard derived from real records; opt-in daily due reminders.
+- [x] Domain and HTTP integration tests; CI; Docker templates and backup helper.
 
-## Phase 1: foundations
-- [ ] Set up frontend and backend after approval.
-- [ ] Public registration, email verification/reset via Resend, household creation, invitations and membership authorization.
-- [ ] Responsive navigation and shared UI primitives.
-- [ ] Test fixtures and basic CI.
+## Release follow-up
+- [ ] Residents review workflows on their own phones using user-initiated accounts.
+- [ ] Confirm delivery of a user-initiated verification email in the recipient's inbox.
+- [ ] Review whether the English interface and role capabilities suit the residents.
+- [ ] Add account and household deletion with agreed handling of shared history.
+- [ ] Extend monitoring and abuse controls before public promotion at scale.
+- [ ] Verify that VM backups cover Home's volume and test off-server recovery.
 
-## Phase 2: MVP
-- [ ] Chores, rotation and completion.
-- [ ] Rent and bill shares with payment confirmation.
-- [ ] Shared purchases, equal/percentage/fixed splits, balances and partial reimbursements.
-- [ ] Shared shopping list.
-- [ ] Dashboard using actual records.
-- [ ] PWA installability and opt-in reminders.
-
-## Phase 3: release
-- [ ] Test with all three residents on real devices.
-- [ ] Verify cross-household permissions, registration abuse controls, email delivery, exact split calculations, backup and recovery.
-- [ ] Deploy after review; document installation and support.
-
-## Later
-Calendar, buffer ledger, maintenance and move-out. Prioritize from actual feedback. Target before move-in is aspirational, not a commitment.
+## Later, only if useful
+Push notifications, offline editing with conflict resolution, furniture ownership, calendar, buffer ledger, maintenance and move-out. Prioritize these from resident feedback.

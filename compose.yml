@@ -1,0 +1,67 @@
+name: home
+services:
+  app:
+    build: .
+    image: home-app:local
+    restart: unless-stopped
+    read_only: true
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Set the public HTTPS origin}
+      DATABASE_PATH: /data/home.sqlite
+    volumes: ["home_data:/data"]
+    networks:
+      proxy:
+        aliases: [home-app]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 384m
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  mail-worker:
+    image: home-app:local
+    command: [node, backend/worker.mjs]
+    restart: unless-stopped
+    read_only: true
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:?Set the public HTTPS origin}
+      DATABASE_PATH: /data/home.sqlite
+      RESEND_API_KEY_FILE: /run/secrets/resend_api_key
+      MAIL_FROM: ${MAIL_FROM:?Set MAIL_FROM in the server-only .env}
+    secrets: [resend_api_key]
+    volumes: ["home_data:/data"]
+    networks: [mail]
+    depends_on:
+      app: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "const fs=require('node:fs');process.exit(Date.now()-Number(fs.readFileSync('/tmp/home-worker-heartbeat','utf8'))<90000?0:1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 256m
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+volumes:
+  home_data:
+secrets:
+  resend_api_key:
+    file: ${RESEND_SECRET_FILE:?Set a server-only credential file path}
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-npm_default}
+  mail:
