@@ -9,3 +9,5 @@ The gallery emphasizes mobile. Light/dark appearance, the floating navigation, g
 When refreshing images, use an isolated database without the mail worker, review each screenshot for private data, check narrow-screen reflow and preserve the source images alongside the compositions. Never capture production credentials, email verification links or personal household records.
 
 The notification gallery adds real light/dark settings captures from the same isolated demo database. It shows saved lead time and local time choices, with push disabled until explicit device consent. It is interface evidence, not proof of physical iPhone/APNs delivery.
+
+The latest notification captures show separate schedules: same-day chores at 08:00 and payments two days before at 18:00. They use the isolated demo account, with email and push delivery disabled.

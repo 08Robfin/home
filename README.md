@@ -20,7 +20,7 @@ A mobile-first app for shared chores, expenses and shopping. Create an account, 
 | Repayments | Record partial payments and let the recipient confirm receipt |
 | Shopping | Keep one shared list with quantities and checked items |
 | Accounts | Verified email registration and password reset through Resend |
-| Notifications | Email and per-device push, chores/payments, 0–14 days before, local time, time zone and optional overdue reminders |
+| Notifications | Email and per-device push; separate chore/payment lead times and clock times, time zone and optional overdue reminders |
 
 The app has light, dark and system appearance, a floating mobile navigation menu and a desktop layout. Phone pages and menus use vertical scrolling with fixed-scale touch navigation. Household data is private to its members. Home records repayments; it does not move money or connect to a bank.
 
