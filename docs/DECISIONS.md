@@ -10,7 +10,10 @@
 | Hosting | Proposed | Self-hosted Proxmox, HTTPS |
 | Brand | Proposed | Home. with simple house mark and neutral palette |
 | Language | Open | English or Norwegian interface |
-| Permissions | Open | Confirm visibility and household administration |
+| Registration | Required | Public email registration, verification through Resend |
+| Households | Required | Any verified user can create a household and invite others; private tenant data |
+| Expenses | Required | Shared purchases and equal, percentage or fixed splits |
+| Permissions | Open | Confirm owner/admin/member capabilities and departure rules |
 | Reminders | Open | Cadence, opt-in preferences and fallback |
 | Payment shares | Open | Confirm actual amounts, deadlines and recipients |
 
