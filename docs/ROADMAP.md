@@ -23,4 +23,8 @@
 - [ ] Verify that VM backups cover Home's volume and test off-server recovery.
 
 ## Later, only if useful
-Push notifications, offline editing with conflict resolution, furniture ownership, calendar, buffer ledger, maintenance and move-out. Prioritize these from resident feedback.
+Offline editing with conflict resolution, furniture ownership, calendar, buffer ledger, maintenance and move-out. Prioritize these from resident feedback.
+
+## Notification release
+
+Configurable daily email and encrypted Web Push reminders are implemented with per-device consent, category/lead-time/local-time preferences, generic previews, bounded retries and opt-out cleanup. Physical iPhone installation/delivery verification remains open. See SAFARI.md and AI_HANDOFF.md.

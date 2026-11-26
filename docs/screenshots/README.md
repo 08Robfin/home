@@ -7,3 +7,5 @@ The overview and appearance compositions place unchanged screen captures inside 
 The gallery emphasizes mobile. Light/dark appearance, the floating navigation, grouped chore rows and the expense split preview reflect the implemented revision. Original planning concepts remain under `docs/design/` for reference.
 
 When refreshing images, use an isolated database without the mail worker, review each screenshot for private data, check narrow-screen reflow and preserve the source images alongside the compositions. Never capture production credentials, email verification links or personal household records.
+
+The notification gallery adds real light/dark settings captures from the same isolated demo database. It shows saved lead time and local time choices, with push disabled until explicit device consent. It is interface evidence, not proof of physical iPhone/APNs delivery.

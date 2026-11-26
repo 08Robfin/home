@@ -1,6 +1,7 @@
 # AI coding agent instructions
 
 ## Start here
+Read [the AI and maintainer handoff](docs/AI_HANDOFF.md) for implemented behavior, design lessons, security boundaries, current branch state and the PR/integration workflow. Keep it current when those conventions change. Use `.github/pull_request_template.md` and synchronize the README with shipped behavior; use demo records only in public captures.
 Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/OPERATIONS.md, docs/ROADMAP.md and docs/DECISIONS.md. A first working release exists. Inspect the implemented architecture before making changes. Treat remaining proposals as proposals, not requirements.
 
 ## Working rules

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createECDH} from 'node:crypto';
 import { openDb } from '../backend/db.mjs';
 import { createApp } from '../backend/server.mjs';
 import { schedule,deliverOne } from '../backend/worker.mjs';
@@ -44,11 +45,24 @@ test('real HTTP account, tenancy, invitation, chore, ledger, receipt and email f
   });
   await t.test('monthly bills and opted-in reminders are restart safe',async()=>{
     const bill=(await a(`/h/${h}/expenses`,{...input,title:'Rent',kind:'bill',monthly:true,due:'2026-01-01'})).id;assert.ok(bill);schedule(db,origin);schedule(db,origin);const dates=db.prepare('SELECT due FROM expenses WHERE template_id IS NOT NULL').all().map(x=>x.due);assert.equal(dates.length,new Set(dates).size);
-    await b('/profile',{name:'B',reminders:true});schedule(db,origin);schedule(db,origin);assert.equal(db.prepare("SELECT count(*) AS n FROM mail WHERE event_key LIKE 'reminder:%'").get().n,0);
+    await b('/profile',{name:'B',reminders:true,reminder_time:'00:00'});schedule(db,origin);schedule(db,origin);assert.equal(db.prepare("SELECT count(*) AS n FROM mail WHERE event_key LIKE 'reminder:%'").get().n,0);
     await a(`/h/${h}/chores`,{title:'Reminder chore',assignee:uidB,due:today()});schedule(db,origin);schedule(db,origin);assert.equal(db.prepare("SELECT count(*) AS n FROM mail WHERE event_key LIKE 'reminder:%'").get().n,1);
   });
   await t.test('shopping edits persist and CSRF is rejected',async()=>{const s=(await a(`/h/${h}/shopping`,{title:'Milk',quantity:'2'})).id;await b(`/h/${h}/shopping/${s}`,{title:'Oat milk',quantity:'1',checked:true});assert.equal((await a('/h/'+h)).shopping[0].title,'Oat milk');await a(`/h/${h}/shopping`,{title:'CSRF'},403,{Origin:'https://evil.example'});await a(`/h/${h}/shopping/clear`,{});assert.equal((await a('/h/'+h)).shopping.length,0);});
   await t.test('mail retries keep stable idempotency keys and never store provider error bodies',async()=>{const calls=[];const send=async(url,options)=>{calls.push(options);return {ok:calls.length>1,status:calls.length>1?200:429,json:async()=>({id:'test-provider-id'})};};await deliverOne(db,{apiKey:'fake-only-for-test',from:'Home <test@example.test>',fetchImpl:send});const row=db.prepare("SELECT * FROM mail WHERE attempts=1").get();assert.equal(row.status,'pending');db.prepare('UPDATE mail SET next_attempt=0 WHERE id=?').run(row.id);await deliverOne(db,{apiKey:'fake-only-for-test',from:'Home <test@example.test>',fetchImpl:send});assert.equal(calls[0].headers['Idempotency-Key'],calls[1].headers['Idempotency-Key']);assert.equal(db.prepare('SELECT body FROM mail WHERE id=?').get(row.id).body,'');});
+  await t.test('notification preferences validate, persist and cancel pending digests',async()=>{
+    await b('/profile',{name:'B',reminders:true,reminder_days:'3',reminder_time:'18:15',reminder_zone:'America/New_York',reminder_chores:false,reminder_payments:true,reminder_overdue:true});
+    const user=(await b('/me')).user;assert.equal(user.reminder_days,3);assert.equal(user.reminder_time,'18:15');assert.equal(user.reminder_zone,'America/New_York');assert.equal(user.reminder_chores,false);assert.equal(user.reminder_overdue,true);
+    for(const invalid of [{reminder_days:15},{reminder_days:-1},{reminder_time:'25:00'},{reminder_zone:'Invalid/Zone'}])await b('/profile',{name:'B',...invalid},400);
+    assert.equal(db.prepare("SELECT count(*) n FROM mail WHERE event_key LIKE 'reminder:%' AND status='pending'").get().n,0);
+  });
+  await t.test('push endpoints are authenticated, scoped, deduplicated and never expose private VAPID keys',async()=>{
+    const anon=client();await anon('/push/key',undefined,401);const key=await a('/push/key');assert.deepEqual(Object.keys(key),['publicKey']);assert.equal(Buffer.from(key.publicKey,'base64url').length,65);
+    const receiver=createECDH('prime256v1');receiver.generateKeys();const subscription={endpoint:'https://web.push.apple.com/synthetic-only',keys:{p256dh:receiver.getPublicKey().toString('base64url'),auth:Buffer.alloc(16,1).toString('base64url')}};
+    await a('/push/subscribe',{subscription});await a('/push/subscribe',{subscription});assert.equal(db.prepare('SELECT count(*) n FROM push_subscriptions').get().n,1);
+    assert.equal((await b('/push/status',{endpoint:subscription.endpoint})).subscribed,false);await b('/push/subscribe',{subscription},409);await b('/push/test',{endpoint:subscription.endpoint},400);await b('/push/unsubscribe',{endpoint:subscription.endpoint});assert.equal(db.prepare('SELECT count(*) n FROM push_subscriptions').get().n,1);
+    await a('/push/test',{endpoint:subscription.endpoint});assert.equal(db.prepare('SELECT count(*) n FROM push_outbox').get().n,1);await a('/push/subscribe',{subscription:{...subscription,endpoint:'https://127.0.0.1/secret'}},400);await a('/push/unsubscribe',{endpoint:subscription.endpoint});assert.equal(db.prepare('SELECT count(*) n FROM push_outbox').get().n,0);
+  });
   await t.test('password reset is single-use and invalidates existing sessions',async()=>{await b('/auth/forgot',{email:'b@example.test'});const raw=rawToken('b@example.test','reset');await b('/auth/reset',{token:raw,password:'a changed test password'});await b('/me',undefined,401);await b('/auth/reset',{token:raw,password:'a changed test password'},400);await b('/auth/login',{email:'b@example.test',password:'a changed test password'});});
   await t.test('owner cannot leave without transfer, member cannot escalate privileges',async()=>{await a(`/h/${h}/leave`,{},400);await b(`/h/${h}/member`,{user_id:uidB,role:'owner'},403);});
 });

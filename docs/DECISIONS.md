@@ -14,7 +14,7 @@
 | Households | Required | Any verified user can create a household and invite others; private tenant data |
 | Expenses | Required | Shared purchases and equal, percentage or fixed splits |
 | Permissions | Open | Confirm owner/admin/member capabilities and departure rules |
-| Reminders | Open | Cadence, opt-in preferences and fallback |
+| Reminders | Implemented 2026-11-26 | Opt-in daily email and per-device push; categories, 0–14 day lead, local time/zone and optional overdue reminders |
 | Payment shares | Open | Confirm actual amounts, deadlines and recipients |
 
 Record new decisions with date, participants, context, alternatives and rationale. Do not silently change agreed decisions.
@@ -24,3 +24,7 @@ Record new decisions with date, participants, context, alternatives and rational
 The user explicitly requested implementation, Resend integration and deployment using their existing server and Nginx Proxy Manager. The implementation retains the logo, restrained green interface, public verified registration and household isolation. English is the initial interface language, following the existing plans; residents can review that choice.
 
 The earlier framework/backend proposals were replaced with Node's standard library and SQLite to keep deployment small and avoid runtime dependency installation. A separate mail worker receives a domain-restricted Resend sending credential. Production configuration and credentials stay on the server; the repository contains templates only. Owner/admin/member permissions and departure safeguards are documented in OPERATIONS.md. Financial amounts, households and people are never hardcoded in production.
+
+## 2026-11-26: reminders and AI maintenance
+
+The user requested configurable email timing, push notifications, Safari Home Screen polish and an up-to-date GitHub handoff for future AI contributors. The existing worker and standard Node cryptography implement encrypted Web Push without a new runtime dependency. Additive SQLite migrations preserve existing accounts and email consent. Notifications remain date-based daily summaries, with generic lock-screen text and explicit permission per device. AI_HANDOFF.md records design lessons, code ownership, limits and branch/PR integration rules; it deliberately excludes private deployment details.

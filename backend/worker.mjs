@@ -1,7 +1,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openDb,transaction } from './db.mjs';
-import { id,now,today,nextMonth,enqueue,escapeHtml } from './domain.mjs';
+import { id,now,today,nextMonth,escapeHtml } from './domain.mjs';
+
+import {scheduleReminders} from './reminders.mjs';
+import {deliverPushOne} from './push.mjs';
 
 export function schedule(db,origin) {
   const day=today();
@@ -12,12 +15,9 @@ export function schedule(db,origin) {
       if(result.changes)for(const s of JSON.parse(b.shares))db.prepare('INSERT INTO shares VALUES(?,?,?)').run(eid,s.user_id,s.amount);
       db.prepare('UPDATE bills SET next_due=? WHERE id=?').run(nextMonth(b.next_due,b.anchor_day),b.id);
     }
-    const users=db.prepare('SELECT * FROM users WHERE verified=1 AND reminders=1').all();
-    for(const u of users) {
-      const chores=db.prepare('SELECT c.* FROM chores c JOIN members m ON m.household_id=c.household_id AND m.user_id=? WHERE c.assignee=? AND c.done=0 AND c.due=?').all(u.id,u.id,day);
-      const bills=db.prepare(`SELECT e.*,s.amount-COALESCE((SELECT SUM(t.amount) FROM settlements t WHERE t.expense_id=e.id AND t.payer=? AND t.status IN ('sent','confirmed')),0) AS remaining FROM expenses e JOIN shares s ON s.expense_id=e.id JOIN members m ON m.household_id=e.household_id AND m.user_id=? WHERE s.user_id=? AND e.payer<>? AND e.voided=0 AND e.due=?`).all(u.id,u.id,u.id,u.id,day).filter(e=>e.remaining>0);
-      if(chores.length||bills.length)enqueue(db,{key:`reminder:${u.id}:${day}`,to:u.email,subject:'Due today on Home.',body:[...chores.map(c=>`Chore: ${c.title}`),...bills.map(b=>`Payment: ${b.title} — ${(b.remaining/100).toFixed(2)} NOK`),'',origin,'','Manage email reminders in Settings on Home.'].join('\n')});
-    }
+    scheduleReminders(db,origin);
+    db.prepare("UPDATE push_outbox SET status='failed',payload='',error='Delivery window expired' WHERE status IN ('pending','processing') AND created<?").run(now()-23*3600000);
+    db.prepare("DELETE FROM push_outbox WHERE status IN ('sent','failed') AND created<?").run(now()-30*86400000);
     db.prepare('DELETE FROM tokens WHERE expires<?').run(now());db.prepare('DELETE FROM sessions WHERE expires<?').run(now());
     db.prepare("UPDATE mail SET status='failed',body='',error='Delivery window expired' WHERE status IN ('pending','processing') AND created<?").run(now()-23*3600000);
     db.prepare('DELETE FROM rate_limits WHERE expires<?').run(now());
@@ -49,6 +49,6 @@ if(process.argv[1]===fileURLToPath(import.meta.url)) {
   const db=openDb();
   const apiKey=process.env.RESEND_API_KEY_FILE?readFileSync(process.env.RESEND_API_KEY_FILE,'utf8').trim():process.env.RESEND_API_KEY;
   if(!apiKey||!process.env.MAIL_FROM||!process.env.APP_ORIGIN)throw new Error('Mail worker configuration is incomplete.');
-  const loop=async()=>{try{writeFileSync('/tmp/home-worker-heartbeat',String(now()));schedule(db,process.env.APP_ORIGIN);for(let i=0;i<20;i++){writeFileSync('/tmp/home-worker-heartbeat',String(now()));if(!await deliverOne(db,{apiKey,from:process.env.MAIL_FROM}))break;await new Promise(r=>setTimeout(r,600));}}catch{console.error('Mail worker tick failed.');}setTimeout(loop,15000);};
+  const loop=async()=>{try{writeFileSync('/tmp/home-worker-heartbeat',String(now()));schedule(db,process.env.APP_ORIGIN);for(let i=0;i<20;i++){writeFileSync('/tmp/home-worker-heartbeat',String(now()));if(!await deliverOne(db,{apiKey,from:process.env.MAIL_FROM}))break;await new Promise(r=>setTimeout(r,600));}for(let i=0;i<20;i++){writeFileSync('/tmp/home-worker-heartbeat',String(now()));if(!await deliverPushOne(db,{origin:process.env.APP_ORIGIN}))break;}}catch{console.error('Mail worker tick failed.');}setTimeout(loop,15000);};
   loop();
 }

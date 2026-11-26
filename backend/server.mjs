@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { openDb, transaction } from './db.mjs';
+import {pushKeys,validateSubscription,queuePush} from './push.mjs';
 import { id,now,token,hash,fail,text,email,date,money,allocate,passwordHash,passwordCheck,issueToken,today,addDays,nextMonth } from './domain.mjs';
 
 export function createApp({db=openDb(),origin=process.env.APP_ORIGIN||'http://localhost:3000',secure=origin.startsWith('https:')}={}) {
@@ -44,12 +45,30 @@ export function createApp({db=openDb(),origin=process.env.APP_ORIGIN||'http://lo
     }
     if(['/api/auth/verify','/api/auth/reset'].includes(path)&&method==='POST') {
       const kind=path.endsWith('reset')?'reset':'verify';const digest=hash(text(body.token,100));const pw=kind==='reset'?await passwordHash(body.password):null;
-      transaction(db,()=>{const t=get('SELECT * FROM tokens WHERE hash=? AND kind=? AND expires>?',digest,kind,now());if(!t)fail('This link has expired or has already been used. Request a new one.');if(kind==='verify')run('UPDATE users SET verified=1 WHERE id=?',t.user_id);else {run('UPDATE users SET password=? WHERE id=?',pw,t.user_id);run('DELETE FROM sessions WHERE user_id=?',t.user_id);}run('DELETE FROM tokens WHERE user_id=? AND kind=?',t.user_id,kind);});return {message:kind==='verify'?'Email verified. You can sign in.':'Password changed. Sign in with your new password.'};
+      transaction(db,()=>{const t=get('SELECT * FROM tokens WHERE hash=? AND kind=? AND expires>?',digest,kind,now());if(!t)fail('This link has expired or has already been used. Request a new one.');if(kind==='verify')run('UPDATE users SET verified=1 WHERE id=?',t.user_id);else {run('UPDATE users SET password=? WHERE id=?',pw,t.user_id);run('DELETE FROM sessions WHERE user_id=?',t.user_id);run('DELETE FROM push_subscriptions WHERE user_id=?',t.user_id);}run('DELETE FROM tokens WHERE user_id=? AND kind=?',t.user_id,kind);});return {message:kind==='verify'?'Email verified. You can sign in.':'Password changed. Sign in with your new password.'};
     }
     const u=auth(req,false);
-    if(path==='/api/me'&&method==='GET')return {user:{id:u.id,email:u.email,name:u.name,verified:!!u.verified,reminders:!!u.reminders},households:all('SELECT h.id,h.name,m.role FROM households h JOIN members m ON m.household_id=h.id WHERE m.user_id=? ORDER BY h.created',u.id)};
-    if(path==='/api/profile'&&method==='POST') {run('UPDATE users SET name=?,reminders=? WHERE id=?',text(body.name,80),body.reminders===true?1:0,u.id);return {ok:true};}
+    if(path==='/api/me'&&method==='GET')return {user:{id:u.id,email:u.email,name:u.name,verified:!!u.verified,reminders:!!u.reminders,reminder_days:u.reminder_days,reminder_time:u.reminder_time,reminder_zone:u.reminder_zone,reminder_chores:!!u.reminder_chores,reminder_payments:!!u.reminder_payments,reminder_overdue:!!u.reminder_overdue},households:all('SELECT h.id,h.name,m.role FROM households h JOIN members m ON m.household_id=h.id WHERE m.user_id=? ORDER BY h.created',u.id)};
+    if(path==='/api/profile'&&method==='POST') {
+      const days=body.reminder_days===undefined?u.reminder_days:Number(body.reminder_days),time=body.reminder_time??u.reminder_time,zone=body.reminder_zone??u.reminder_zone;
+      if(!Number.isInteger(days)||days<0||days>14||typeof time!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))fail('Choose 0–14 days and a valid reminder time.');
+      try{if(typeof zone!=='string'||zone.length>80)throw Error();new Intl.DateTimeFormat('en',{timeZone:zone});}catch{fail('Choose a valid time zone.');}
+      const preference=k=>body[k]===undefined?u[k]:body[k]===true?1:0;
+      transaction(db,()=>{
+        run('UPDATE users SET name=?,reminders=?,reminder_days=?,reminder_time=?,reminder_zone=?,reminder_chores=?,reminder_payments=?,reminder_overdue=? WHERE id=?',text(body.name,80),body.reminders===true?1:0,days,time,zone,preference('reminder_chores'),preference('reminder_payments'),preference('reminder_overdue'),u.id);
+        run("UPDATE mail SET status='failed',body='',error='Preferences changed' WHERE recipient=? AND event_key LIKE 'reminder:%' AND status IN ('pending','processing')",u.email);
+        run("UPDATE push_outbox SET status='failed',payload='',error='Preferences changed' WHERE subscription_id IN (SELECT id FROM push_subscriptions WHERE user_id=?) AND event_key LIKE 'reminder:%' AND status IN ('pending','processing')",u.id);
+      });return {ok:true};
+    }
     if(!u.verified)fail('Verify your email address first.',403);
+    if(path==='/api/push/key'&&method==='GET')return {publicKey:pushKeys(db).public_key};
+    if(path==='/api/push/subscribe'&&method==='POST') {
+      rate('push-subscribe:'+u.id,30);const s=validateSubscription(body.subscription);
+      return transaction(db,()=>{const existing=get('SELECT id,user_id FROM push_subscriptions WHERE endpoint=?',s.endpoint);if(existing&&existing.user_id!==u.id)fail('Disable notifications on this device before connecting another account.',409);if(!existing&&get('SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id=?',u.id).n>=10)fail('The 10-device notification limit has been reached.');const sid=existing?.id||id();run('INSERT INTO push_subscriptions VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET p256dh=excluded.p256dh,auth=excluded.auth',sid,u.id,s.endpoint,s.p256dh,s.auth,now());return {ok:true};});
+    }
+    if(path==='/api/push/status'&&method==='POST')return {subscribed:!!get('SELECT id FROM push_subscriptions WHERE endpoint=? AND user_id=?',text(body.endpoint,2048),u.id)};
+    if(path==='/api/push/unsubscribe'&&method==='POST'){run('DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?',text(body.endpoint,2048),u.id);return {ok:true};}
+    if(path==='/api/push/test'&&method==='POST'){rate('push-test:'+u.id,5,3600000);const s=get('SELECT id FROM push_subscriptions WHERE endpoint=? AND user_id=?',text(body.endpoint,2048),u.id);if(!s)fail('Enable notifications on this device first.');queuePush(db,s.id,'test:'+id(),{title:'Home.',body:'Notifications are connected on this device.',tag:'home-test'});return {queued:true};}
     if(path==='/api/households'&&method==='POST') {rate('households:'+u.id,10,86400000);const h=id();transaction(db,()=>{run('INSERT INTO households VALUES(?,?,?)',h,text(body.name,100),now());run('INSERT INTO members VALUES(?,?,?)',h,u.id,'owner');audit(h,u.id,'household.created',h);});return {id:h};}
     if(path==='/api/invitations/accept'&&method==='POST') {
       return transaction(db,()=>{const t=get('SELECT * FROM tokens WHERE hash=? AND kind=\'invite\' AND expires>?',hash(text(body.token,100)),now());if(!t||t.email!==u.email)fail('This invitation is expired, revoked, or belongs to a different email address.');if(all('SELECT user_id FROM members WHERE household_id=?',t.household_id).length>=50)fail('This household has reached the 50-member limit.');run('INSERT OR IGNORE INTO members VALUES(?,?,?)',t.household_id,u.id,'member');run('DELETE FROM tokens WHERE hash=?',t.hash);audit(t.household_id,u.id,'invitation.accepted',u.id);return {id:t.household_id};});

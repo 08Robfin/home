@@ -1,14 +1,19 @@
-## Summary
+## Change
 
-## Related issue
+Describe the concrete problem and resulting behavior. Keep the scope focused.
 
-## Verification
-- [ ] Scope matches the issue
-- [ ] Relevant tests run (describe results or why not applicable)
-- [ ] UI checked on mobile and desktop, if applicable
-- [ ] No credentials or private household data
-- [ ] Documentation and decisions updated, if applicable
+## Validation
 
-## Screenshots (UI changes)
+- Automated checks run and exact results:
+- Mobile/desktop, theme, keyboard and error-state checks where relevant:
+- Demo screenshots for visible changes:
+- Conditions not verified (especially physical Safari/iPhone behavior):
 
-## Open questions / risks
+## Integration
+
+- Intended base branch checked against `docs/AI_HANDOFF.md`:
+- Migration/compatibility and rollback impact:
+- README and affected docs updated:
+- Diff reviewed for secrets, private records and generated local files:
+
+Do not merge or deploy without maintainer authorization. See `AGENTS.md` and `docs/AI_HANDOFF.md` for the integration workflow.

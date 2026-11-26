@@ -28,7 +28,11 @@ Monthly bill templates retain an anchor day, including return to the 31st after 
 
 ## Email reliability
 
-Email intent is queued in the same database transaction as the originating event. Resend calls have fixed per-message idempotency keys, timeouts and bounded exponential retries. The worker retries transient failures and generic status codes without logging provider bodies or credentials. Pending payloads expire within 23 hours; sent/failed bodies are cleared. Metadata is removed after 30 days. Users opt in to one due-today digest per day. Provider acceptance is not proof of inbox delivery. No inbound email is processed.
+Email intent is queued in the same database transaction as the originating event. Resend calls have fixed per-message idempotency keys, timeouts and bounded exponential retries. The worker retries transient failures and generic status codes without logging provider bodies or credentials. Pending payloads expire within 23 hours; sent/failed bodies are cleared. Metadata is removed after 30 days. Users opt in to a daily summary with configurable 0–14 day lead time, local time, time zone, categories and overdue reminders. Provider acceptance is not proof of inbox delivery. No inbound email is processed.
+
+## Web Push
+
+The same background worker processes a separate durable push outbox. Subscriptions are account-scoped and limited to supported browser push HTTPS endpoints without redirects. Node crypto implements RFC 8291 encryption and RFC 8292 VAPID; its encrypted output is checked against the published RFC vector. Signing material is generated server-side in SQLite; only the public verification key is sent to authenticated browsers. Expired subscriptions are removed, retries are bounded, and payloads are cleared after completion. Push previews are generic. The HTTP app still has no Resend key. See [AI handoff](AI_HANDOFF.md) for scheduling semantics, security limits and code ownership.
 
 ## Browser and operations
 

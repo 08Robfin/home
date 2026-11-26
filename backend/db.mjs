@@ -27,7 +27,13 @@ export function openDb(path = process.env.DATABASE_PATH || './data/home.sqlite')
     CREATE INDEX IF NOT EXISTS chore_household ON chores(household_id,due);
     CREATE INDEX IF NOT EXISTS expense_household ON expenses(household_id,created);
     CREATE INDEX IF NOT EXISTS token_expiry ON tokens(expires);
+    CREATE TABLE IF NOT EXISTS push_config(id INTEGER PRIMARY KEY CHECK(id=1),private_jwk TEXT NOT NULL,public_key TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS push_subscriptions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,endpoint TEXT UNIQUE NOT NULL,p256dh TEXT NOT NULL,auth TEXT NOT NULL,created INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS push_outbox(id TEXT PRIMARY KEY,event_key TEXT UNIQUE NOT NULL,subscription_id TEXT NOT NULL REFERENCES push_subscriptions(id) ON DELETE CASCADE,payload TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,next_attempt INTEGER NOT NULL,created INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending',error TEXT);
   `);
+  // Additive, restart-safe migration for existing installations; defaults preserve opt-in state.
+  const columns=new Set(db.prepare('PRAGMA table_info(users)').all().map(c=>c.name));
+  for(const [name,definition] of Object.entries({reminder_days:'INTEGER NOT NULL DEFAULT 0',reminder_time:"TEXT NOT NULL DEFAULT '09:00'",reminder_zone:"TEXT NOT NULL DEFAULT 'Europe/Oslo'",reminder_chores:'INTEGER NOT NULL DEFAULT 1',reminder_payments:'INTEGER NOT NULL DEFAULT 1',reminder_overdue:'INTEGER NOT NULL DEFAULT 0'}))if(!columns.has(name))db.exec(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
   return db;
 }
 export function transaction(db, fn) {

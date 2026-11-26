@@ -14,7 +14,7 @@ Run `docker compose build app`, then `docker compose up -d --wait app mail-worke
 
 The web container has no Resend credential. Only the worker mounts the secret, reads pending messages from SQLite and calls Resend over HTTPS. Sending uses a durable outbox, fixed per-message idempotency keys, bounded exponential retry and a 23-hour delivery window. Failed and successful message bodies are erased. Metadata is retained for 30 days. Verification links expire after 24 hours, reset links after one hour and invitations after seven days. Links are single use; link tokens travel in URL fragments, not server request URLs. The application never processes inbound email.
 
-Daily reminders require each user to opt in under Settings. One email per user and Oslo calendar day includes records due that day. There is no daily overdue-email campaign. A change added after that day's digest may only appear in the app. Monthly bills retain their original day across shorter months. Recurring chores create the next dated occurrence on completion, preserving missed work rather than silently skipping it.
+Reminders are opt-in under Settings: email per account and push per browser installation. Users choose chores/payments, 0–14 days before, local time, time zone and optional daily overdue reminders. The worker queues at most one summary per eligible user/channel/local day, after the chosen time. Future monthly templates are included without creating a charge early. Newly added records after that day's digest may only appear in the app. Push is best effort; use the device test button and verify on a real iPhone. See SAFARI.md. Monthly bills retain their original day across shorter months. Recurring chores create the next dated occurrence on completion, preserving missed work rather than silently skipping it.
 
 ## Backups and restore
 
@@ -24,7 +24,7 @@ To restore: stop `app` and `mail-worker`, preserve the current volume, restore a
 
 ## Updates and rollback
 
-Back up before an update. Build a new image, run tests, and restart only this Compose project. Do not use `docker compose down -v`; that deletes household data. Keep the previous image and database backup when changing the schema. Version 1 initializes a fresh database; subsequent schema changes need explicit migrations.
+Back up before an update. Build a new image, run tests, and restart only this Compose project. Do not use `docker compose down -v`; that deletes household data. Keep the previous image and database backup when changing the schema. Version 1 initializes a fresh database; subsequent schema changes need explicit migrations. The notification release adds preference columns and push tables without rewriting existing rows; migration is restart-safe. Defaults preserve email opt-in and use 09:00 Europe/Oslo on the due date.
 
 Inspect `docker compose ps` and the worker's message-status counts for failures. Logs contain generic failure codes; they must not contain credentials, passwords, email bodies or link tokens. A provider accepting a message is distinct from delivery to a recipient's inbox. The automated suite never sends live email.
 
@@ -36,6 +36,10 @@ An explicitly approved live Gmail smoke test on 2026-11-26 confirmed Inbox recei
 - Owners manage roles, transfer ownership and remove members. Admins invite, revoke invitations, rename the household and manage chore assignments and recurring bills. Members manage shared lists, create expenses and complete their own chores.
 - Departure is blocked while the person has unfinished assignments, recurring obligations or unsettled amounts. Owners transfer ownership before leaving. Historical financial records remain for the household.
 - Expenses are immutable after creation; void an unsettled mistake and add a correction. Sent or confirmed repayments prevent voiding. Only the named recipient confirms or rejects a repayment.
-- There is no banking integration, automatic transfer, offline editing, push notification, furniture ownership ledger or account/household deletion flow in this release. A server operator must handle deletion and retention requests after resolving shared records. Do not upload signed contracts or bank credentials.
+- There is no banking integration, automatic transfer, offline editing, furniture ownership ledger or account/household deletion flow in this release. A server operator must handle deletion and retention requests after resolving shared records. Do not upload signed contracts or bank credentials.
 - Authentication limits are persistent. Because forwarded IP headers are not trusted, the proxy's authentication limit is shared (60 requests per 15 minutes), with additional per-email limits. This is suitable for a small deployment; review it before larger-scale public promotion.
 - The service worker caches only the static application shell; private API responses and receipts are never cached. An offline shell can open, but requires connectivity to sign in and retrieve data.
+
+## Push operations
+
+VAPID signing material and private device subscriptions live in SQLite and its backups; no external API key is required for browser push. Do not export these tables or rotate keys casually. Never return the private JWK in an API response. Allow worker HTTPS egress to the supported Apple, Google, Mozilla and Microsoft browser push services. Endpoint allowlisting and redirect rejection are required. Push status/attempt/error metadata is in `push_outbox`; do not print endpoints or payloads in logs. Completed payloads are erased and metadata expires after 30 days; 404/410 removes the subscription. After restoring a database, clear `push_outbox` and `push_subscriptions` alongside sessions/tokens/unsent mail so restored device endpoints cannot resume notifications unexpectedly. Retain `push_config` to preserve the server identity.
