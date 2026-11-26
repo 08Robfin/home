@@ -33,11 +33,16 @@ export function encryptPush(subscription,payload,{salt=randomBytes(16),sender=nu
   const cipher=createCipheriv('aes-128-gcm',key,nonce),header=Buffer.alloc(21);salt.copy(header);header.writeUInt32BE(4096,16);header[20]=65;
   return Buffer.concat([header,pub,cipher.update(Buffer.concat([plain,Buffer.from([2])])),cipher.final(),cipher.getAuthTag()]);
 }
+const vapidTokens=new Map();
 export function vapidAuthorization(endpoint,keys,subject) {
+  const cacheKey=new URL(endpoint).origin+'|'+keys.public_key+'|'+subject;
+  const cached=vapidTokens.get(cacheKey);if(cached&&cached.refreshAfter>now())return cached.authorization;
   const encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
   const input=encode({typ:'JWT',alg:'ES256'})+'.'+encode({aud:new URL(endpoint).origin,exp:Math.floor(now()/1000)+43200,sub:subject});
   const signature=sign('sha256',Buffer.from(input),{key:createPrivateKey({key:JSON.parse(keys.private_jwk),format:'jwk'}),dsaEncoding:'ieee-p1363'}).toString('base64url');
-  return `vapid t=${input}.${signature}, k=${keys.public_key}`;
+  const authorization=`vapid t=${input}.${signature}, k=${keys.public_key}`;
+  for(const [key,value] of vapidTokens)if(value.refreshAfter<=now())vapidTokens.delete(key);
+  vapidTokens.set(cacheKey,{authorization,refreshAfter:now()+3600000});return authorization;
 }
 export function queuePush(db,subscriptionId,key,payload) {db.prepare('INSERT OR IGNORE INTO push_outbox(id,event_key,subscription_id,payload,next_attempt,created) VALUES(?,?,?,?,?,?)').run(id(),key,subscriptionId,JSON.stringify(payload),now(),now());}
 export async function deliverPushOne(db,{origin,fetchImpl=fetch}={}) {
@@ -48,7 +53,7 @@ export async function deliverPushOne(db,{origin,fetchImpl=fetch}={}) {
     if(row.created<now()-23*3600000)throw Object.assign(new Error(),{expired:true});
     validateSubscription({endpoint:row.endpoint,keys:{p256dh:row.p256dh,auth:row.auth}});
     const body=encryptPush(row,Buffer.from(row.payload));
-    const response=await fetchImpl(row.endpoint,{method:'POST',redirect:'error',headers:{Authorization:vapidAuthorization(row.endpoint,pushKeys(db),origin),'Content-Type':'application/octet-stream','Content-Encoding':'aes128gcm',TTL:'3600',Urgency:'normal',Topic:hash(row.event_key).slice(0,32)},body,signal:AbortSignal.timeout(10000)});
+    const response=await fetchImpl(row.endpoint,{method:'POST',redirect:'error',headers:{Authorization:vapidAuthorization(row.endpoint,pushKeys(db),origin),'Content-Type':'application/octet-stream','Content-Encoding':'aes128gcm',TTL:'3600',Urgency:'high',Topic:hash(row.event_key).slice(0,32)},body,signal:AbortSignal.timeout(10000)});
     status=response.status;
     if(status===404||status===410){db.prepare('DELETE FROM push_subscriptions WHERE id=?').run(row.subscription_id);return true;}
     if(!response.ok)throw new Error();

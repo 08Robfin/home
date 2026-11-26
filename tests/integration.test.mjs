@@ -55,6 +55,10 @@ test('real HTTP account, tenancy, invitation, chore, ledger, receipt and email f
     const user=(await b('/me')).user;assert.equal(user.reminder_days,3);assert.equal(user.reminder_time,'18:15');assert.equal(user.reminder_zone,'America/New_York');assert.equal(user.reminder_chores,false);assert.equal(user.reminder_overdue,true);
     for(const invalid of [{reminder_days:15},{reminder_days:-1},{reminder_time:'25:00'},{reminder_zone:'Invalid/Zone'}])await b('/profile',{name:'B',...invalid},400);
     assert.equal(db.prepare("SELECT count(*) n FROM mail WHERE event_key LIKE 'reminder:%' AND status='pending'").get().n,0);
+    await b('/profile',{name:'B',reminders:true,chore_reminder_days:'0',chore_reminder_time:'08:00',payment_reminder_days:'2',payment_reminder_time:'18:30'});
+    const separate=(await b('/me')).user;assert.equal(separate.chore_reminder_days,0);assert.equal(separate.chore_reminder_time,'08:00');assert.equal(separate.payment_reminder_days,2);assert.equal(separate.payment_reminder_time,'18:30');
+    for(const invalid of [{chore_reminder_days:15},{payment_reminder_days:-1},{chore_reminder_time:'24:10'},{payment_reminder_time:'not-a-time'}])await b('/profile',{name:'B',...invalid},400);
+
   });
   await t.test('push endpoints are authenticated, scoped, deduplicated and never expose private VAPID keys',async()=>{
     const anon=client();await anon('/push/key',undefined,401);const key=await a('/push/key');assert.deepEqual(Object.keys(key),['publicKey']);assert.equal(Buffer.from(key.publicKey,'base64url').length,65);

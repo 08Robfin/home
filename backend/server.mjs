@@ -48,14 +48,22 @@ export function createApp({db=openDb(),origin=process.env.APP_ORIGIN||'http://lo
       transaction(db,()=>{const t=get('SELECT * FROM tokens WHERE hash=? AND kind=? AND expires>?',digest,kind,now());if(!t)fail('This link has expired or has already been used. Request a new one.');if(kind==='verify')run('UPDATE users SET verified=1 WHERE id=?',t.user_id);else {run('UPDATE users SET password=? WHERE id=?',pw,t.user_id);run('DELETE FROM sessions WHERE user_id=?',t.user_id);run('DELETE FROM push_subscriptions WHERE user_id=?',t.user_id);}run('DELETE FROM tokens WHERE user_id=? AND kind=?',t.user_id,kind);});return {message:kind==='verify'?'Email verified. You can sign in.':'Password changed. Sign in with your new password.'};
     }
     const u=auth(req,false);
-    if(path==='/api/me'&&method==='GET')return {user:{id:u.id,email:u.email,name:u.name,verified:!!u.verified,reminders:!!u.reminders,reminder_days:u.reminder_days,reminder_time:u.reminder_time,reminder_zone:u.reminder_zone,reminder_chores:!!u.reminder_chores,reminder_payments:!!u.reminder_payments,reminder_overdue:!!u.reminder_overdue},households:all('SELECT h.id,h.name,m.role FROM households h JOIN members m ON m.household_id=h.id WHERE m.user_id=? ORDER BY h.created',u.id)};
+    if(path==='/api/me'&&method==='GET')return {user:{id:u.id,email:u.email,name:u.name,verified:!!u.verified,reminders:!!u.reminders,reminder_days:u.reminder_days,reminder_time:u.reminder_time,reminder_zone:u.reminder_zone,chore_reminder_days:u.chore_reminder_days,chore_reminder_time:u.chore_reminder_time,payment_reminder_days:u.payment_reminder_days,payment_reminder_time:u.payment_reminder_time,reminder_chores:!!u.reminder_chores,reminder_payments:!!u.reminder_payments,reminder_overdue:!!u.reminder_overdue},households:all('SELECT h.id,h.name,m.role FROM households h JOIN members m ON m.household_id=h.id WHERE m.user_id=? ORDER BY h.created',u.id)};
     if(path==='/api/profile'&&method==='POST') {
       const days=body.reminder_days===undefined?u.reminder_days:Number(body.reminder_days),time=body.reminder_time??u.reminder_time,zone=body.reminder_zone??u.reminder_zone;
       if(!Number.isInteger(days)||days<0||days>14||typeof time!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))fail('Choose 0–14 days and a valid reminder time.');
       try{if(typeof zone!=='string'||zone.length>80)throw Error();new Intl.DateTimeFormat('en',{timeZone:zone});}catch{fail('Choose a valid time zone.');}
+      const categorySchedules={};
+      for(const category of ['chore','payment']){
+        const d=category+'_reminder_days',t=category+'_reminder_time';
+        categorySchedules[d]=body[d]===undefined?(body.reminder_days===undefined?u[d]:days):Number(body[d]);
+        categorySchedules[t]=body[t]===undefined?(body.reminder_time===undefined?u[t]:time):body[t];
+        if(!Number.isInteger(categorySchedules[d])||categorySchedules[d]<0||categorySchedules[d]>14||typeof categorySchedules[t]!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(categorySchedules[t]))fail('Choose 0–14 days and a valid reminder time for each category.');
+      }
       const preference=k=>body[k]===undefined?u[k]:body[k]===true?1:0;
       transaction(db,()=>{
         run('UPDATE users SET name=?,reminders=?,reminder_days=?,reminder_time=?,reminder_zone=?,reminder_chores=?,reminder_payments=?,reminder_overdue=? WHERE id=?',text(body.name,80),body.reminders===true?1:0,days,time,zone,preference('reminder_chores'),preference('reminder_payments'),preference('reminder_overdue'),u.id);
+        run('UPDATE users SET chore_reminder_days=?,chore_reminder_time=?,payment_reminder_days=?,payment_reminder_time=? WHERE id=?',categorySchedules.chore_reminder_days,categorySchedules.chore_reminder_time,categorySchedules.payment_reminder_days,categorySchedules.payment_reminder_time,u.id);
         run("UPDATE mail SET status='failed',body='',error='Preferences changed' WHERE recipient=? AND event_key LIKE 'reminder:%' AND status IN ('pending','processing')",u.email);
         run("UPDATE push_outbox SET status='failed',payload='',error='Preferences changed' WHERE subscription_id IN (SELECT id FROM push_subscriptions WHERE user_id=?) AND event_key LIKE 'reminder:%' AND status IN ('pending','processing')",u.id);
       });return {ok:true};

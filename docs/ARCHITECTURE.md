@@ -28,7 +28,7 @@ Monthly bill templates retain an anchor day, including return to the 31st after 
 
 ## Email reliability
 
-Email intent is queued in the same database transaction as the originating event. Resend calls have fixed per-message idempotency keys, timeouts and bounded exponential retries. The worker retries transient failures and generic status codes without logging provider bodies or credentials. Pending payloads expire within 23 hours; sent/failed bodies are cleared. Metadata is removed after 30 days. Users opt in to a daily summary with configurable 0–14 day lead time, local time, time zone, categories and overdue reminders. Provider acceptance is not proof of inbox delivery. No inbound email is processed.
+Email intent is queued in the same database transaction as the originating event. Resend calls have fixed per-message idempotency keys, timeouts and bounded exponential retries. The worker retries transient failures and generic status codes without logging provider bodies or credentials. Pending payloads expire within 23 hours; sent/failed bodies are cleared. Metadata is removed after 30 days. Users opt in to up to one daily summary per category, with independent 0–14 day leads and clock times for chores and payments, a shared time zone and overdue preferences. Provider acceptance is not proof of inbox delivery. No inbound email is processed.
 
 ## Web Push
 

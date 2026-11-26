@@ -396,3 +396,8 @@ form[data-method="fixed"] .share-amount { display: none; }
 @media (min-width: 351px) and (max-width: 480px) {
   form[data-form="notifications"] .form-grid { grid-template-columns: minmax(0, 1fr) 112px; }
 }
+
+.notification-schedule { margin-bottom: 12px; }
+.notification-schedule + .notification-schedule { border-top: 1px solid var(--line); padding-top: 16px; }
+.notification-schedule legend { margin-bottom: 8px; }
+.notification-schedule legend .check { font-weight: 600; }

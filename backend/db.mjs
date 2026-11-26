@@ -34,6 +34,12 @@ export function openDb(path = process.env.DATABASE_PATH || './data/home.sqlite')
   // Additive, restart-safe migration for existing installations; defaults preserve opt-in state.
   const columns=new Set(db.prepare('PRAGMA table_info(users)').all().map(c=>c.name));
   for(const [name,definition] of Object.entries({reminder_days:'INTEGER NOT NULL DEFAULT 0',reminder_time:"TEXT NOT NULL DEFAULT '09:00'",reminder_zone:"TEXT NOT NULL DEFAULT 'Europe/Oslo'",reminder_chores:'INTEGER NOT NULL DEFAULT 1',reminder_payments:'INTEGER NOT NULL DEFAULT 1',reminder_overdue:'INTEGER NOT NULL DEFAULT 0'}))if(!columns.has(name))db.exec(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+  transaction(db,()=>{
+    for(const category of ['chore','payment'])for(const [suffix,definition,legacy] of [['days','INTEGER NOT NULL DEFAULT 0','reminder_days'],['time',"TEXT NOT NULL DEFAULT '09:00'",'reminder_time']]){
+      const name=`${category}_reminder_${suffix}`;
+      if(!columns.has(name)){db.exec(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);db.exec(`UPDATE users SET ${name}=${legacy}`);}
+    }
+  });
   return db;
 }
 export function transaction(db, fn) {

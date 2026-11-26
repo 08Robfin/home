@@ -45,10 +45,20 @@ export async function deliverOne(db,{apiKey,from,origin=process.env.APP_ORIGIN,f
   }
   return true;
 }
+// Independent loops prevent slow email requests from holding up push or scheduling.
+export function startWorkerLoops({scheduleTask,mailTask,pushTask,heartbeat=()=>{},onError=()=>{},timer=setTimeout,cancelTimer=clearTimeout}) {
+  let stopped=false;const timers=new Set();
+  const later=(task,delay)=>{if(stopped)return;const handle=timer(()=>{timers.delete(handle);if(!stopped)task();},delay);timers.add(handle);};
+  const scheduled=()=>{try{scheduleTask();heartbeat('schedule');}catch{onError('schedule');}later(scheduled,15000);};
+  const mail=async()=>{let delivered=false;try{delivered=await mailTask();heartbeat('mail');}catch{onError('mail');}later(mail,delivered?600:1000);};
+  const push=async()=>{const results=await Promise.allSettled([0,1,2].map(()=>Promise.resolve().then(pushTask)));if(results.some(r=>r.status==='rejected'))onError('push');else heartbeat('push');later(push,1000);};
+  scheduled();mail();push();
+  return ()=>{stopped=true;for(const handle of timers)cancelTimer(handle);timers.clear();};
+}
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
   const db=openDb();
   const apiKey=process.env.RESEND_API_KEY_FILE?readFileSync(process.env.RESEND_API_KEY_FILE,'utf8').trim():process.env.RESEND_API_KEY;
   if(!apiKey||!process.env.MAIL_FROM||!process.env.APP_ORIGIN)throw new Error('Mail worker configuration is incomplete.');
-  const loop=async()=>{try{writeFileSync('/tmp/home-worker-heartbeat',String(now()));schedule(db,process.env.APP_ORIGIN);for(let i=0;i<20;i++){writeFileSync('/tmp/home-worker-heartbeat',String(now()));if(!await deliverOne(db,{apiKey,from:process.env.MAIL_FROM}))break;await new Promise(r=>setTimeout(r,600));}for(let i=0;i<20;i++){writeFileSync('/tmp/home-worker-heartbeat',String(now()));if(!await deliverPushOne(db,{origin:process.env.APP_ORIGIN}))break;}}catch{console.error('Mail worker tick failed.');}setTimeout(loop,15000);};
-  loop();
+  const beats={schedule:0,mail:0,push:0};
+  startWorkerLoops({scheduleTask:()=>schedule(db,process.env.APP_ORIGIN),mailTask:()=>deliverOne(db,{apiKey,from:process.env.MAIL_FROM}),pushTask:()=>deliverPushOne(db,{origin:process.env.APP_ORIGIN}),heartbeat:kind=>{beats[kind]=now();if(Object.values(beats).every(t=>now()-t<60000))writeFileSync('/tmp/home-worker-heartbeat',String(now()));},onError:kind=>console.error(kind+' worker tick failed.')});
 }

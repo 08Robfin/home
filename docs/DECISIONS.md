@@ -28,3 +28,7 @@ The earlier framework/backend proposals were replaced with Node's standard libra
 ## 2026-11-26: reminders and AI maintenance
 
 The user requested configurable email timing, push notifications, Safari Home Screen polish and an up-to-date GitHub handoff for future AI contributors. The existing worker and standard Node cryptography implement encrypted Web Push without a new runtime dependency. Additive SQLite migrations preserve existing accounts and email consent. Notifications remain date-based daily summaries, with generic lock-screen text and explicit permission per device. AI_HANDOFF.md records design lessons, code ownership, limits and branch/PR integration rules; it deliberately excludes private deployment details.
+
+## 2026-11-26: category schedules and push latency
+
+At the user’s request, chore and payment reminders have independent lead days and clock times. Existing shared choices migrate into both categories without being reset. Separate event keys/tags retain independent delivery. Push and email processing now run independently in the existing worker, using one-second queue checks and bounded push concurrency; push requests high urgency and reuses VAPID authorization for an hour. No new dependency, service or credential was introduced. Provider and device delays remain outside the app’s control.
