@@ -1,7 +1,10 @@
 # Design and UX
 
 ## Direction (proposed)
-A calm, compact utility. Use the system font stack, neutral surfaces and one restrained accent (proposed forest green). Start with 4/8px spacing increments, 8px control radii, 16px body text and 24–28px page headings. Prefer a flat list with separators over a card for each item. Keep content width readable on desktop; use mobile bottom navigation for Home, Chores, Payments and Shopping. Settings can be secondary.
+A calm, compact utility. Use the system font stack, neutral surfaces and one restrained accent (proposed forest green). Start with 4/8px spacing increments, 8px control radii, 16px body text and 24–28px page headings. Prefer a flat list with separators over a card for each item. Keep content width readable on desktop; use mobile bottom navigation for Home, Chores, Payments and Shopping. Settings and household switching belong in the header. Use generous 20–24px page gutters, consistent 44px minimum actionable rows, real line icons rather than navigation dots, and aligned monetary values. Avoid artificial phone status bars in conceptual screens.
+
+## Key screens
+Home: household switcher, upcoming chores and payments. Payments: clear personal balance, owed-to-you and expense history, with a single add-expense action. Add expense: amount, title, payer, selected participants, split method and exact per-person preview. Registration: email/password, verification state and create-or-join household choice. Do not expose unrelated household data in navigation or search.
 
 ## Copy
 Use task labels and exact status: “Rent”, “Due 1 February”, “Mark as sent”, “Confirm receipt”. A heading needs no preheading or slogan. Do not write “Welcome to your smarter home”, “Stay on top of your journey”, “Everything you need, all in one place” or decorative three-word taglines. Helpful error and empty-state instructions are allowed: “No chores due today” or “Couldn't save. Try again.” Avoid repeating what the heading or button already says.
