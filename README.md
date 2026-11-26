@@ -26,9 +26,11 @@ Calendar, buffer tracking, maintenance and move-out planning are candidates for 
 
 ## Interface
 
-![Mobile wireframes for home, chores and payments](docs/design/dashboard.svg)
+![Mobile concepts for home, payments and expense splitting](docs/design/dashboard.svg)
 
 *Concepts with illustrative data. Not screenshots of an implemented application.*
+
+![Registration, email verification and household creation](docs/design/onboarding.svg)
 
 The design is mobile-first and deliberately restrained: meaningful headings, readable lists, consistent spacing, clear actions and minimal copy. No marketing slogans, decorative gradients or redundant labels. Accessibility and desktop usability are part of the baseline.
 
