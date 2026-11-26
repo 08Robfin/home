@@ -4,9 +4,9 @@ Read this with `AGENTS.md`, `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md` and `OP
 
 ## Repository and integration state
 
-The public landing README lives on `main`. The implementation is on `feat/household-app`, reviewed through draft PR #1. Main has historically contained planning and presentation files rather than the application. Verify branch state before starting: this description can become stale after the maintainer merges #1. Do not merge it automatically.
+The public landing README lives on `main`. The implementation is on `feat/household-app`. PR #1 was closed without merging at the maintainer’s request on 26 November 2026; the deployed app and source branch remain intact. Main has historically contained planning and presentation files rather than the application. Verify branch state before starting; do not reopen the PR or integrate the implementation automatically.
 
-Until #1 is merged, branch application follow-ups from `feat/household-app` and target that branch, or coordinate a focused change to the existing PR. Once main contains the implementation, branch from updated main and target main. Do not recreate the app from the concepts on main. Keep shared documentation identical across the two branches while this transitional arrangement exists; resolve documentation conflicts by preserving the current implemented behavior, not an older proposal.
+Until the implementation is integrated into main, branch application follow-ups from `feat/household-app` and target that branch. Open a new PR only when the requested work calls for one. Once main contains the implementation, branch from updated main and target main. Do not recreate the app from the concepts on main. Keep shared documentation identical across the two branches while this transitional arrangement exists; resolve documentation conflicts by preserving the current implemented behavior, not an older proposal.
 
 ## What has been built
 

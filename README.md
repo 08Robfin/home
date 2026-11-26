@@ -4,7 +4,7 @@
 
 A mobile-first app for shared chores, expenses and shopping. Create an account, verify your email and invite the people you live with.
 
-[Open Home](https://home.robfin.no) · [Application source](https://github.com/08Robfin/home/tree/feat/household-app) · [Implementation PR](https://github.com/08Robfin/home/pull/1)
+[Open Home](https://home.robfin.no) · [Application source](https://github.com/08Robfin/home/tree/feat/household-app)
 
 ![Home on mobile: household overview, shared expenses in dark mode, and shopping](docs/screenshots/overview.jpg)
 
@@ -43,7 +43,7 @@ On iPhone, use Safari → Share → Add to Home Screen. Android and desktop brow
 
 ## Development
 
-The working application is on `feat/household-app` while [PR #1](https://github.com/08Robfin/home/pull/1) is under review. This main page contains its current documentation and screenshot gallery.
+The deployed application source is on `feat/household-app`. PR #1 was closed without merging at the maintainer’s request. This main page contains current documentation and screenshots.
 
 Requires Node.js 24+. No runtime npm dependencies or frontend build step.
 
