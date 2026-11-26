@@ -55,3 +55,7 @@ These choices apply Apple's guidance on alignment, grouping, progressive disclos
 - [WCAG 2.2: Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow) — 320 CSS pixel reflow without loss of content or function.
 - [WCAG 2.2: Target Size](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) — 24px minimum criteria; Home uses the larger 44px touch-target aim.
 - [MDN: CSS environment variables](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Environment_variables/Using) — safe-area inset handling in a browser/PWA.
+
+### Fixed-scale phone navigation follow-up
+
+At the owner’s explicit request, touch zoom and horizontal page/menu panning are suppressed. Controls remain at least 16 px text; date grids reflow on narrow phones; long menu titles, member names and amounts wrap inside bounded surfaces. Dialogs use the visible viewport height and scroll vertically, with scroll reset when changing menus. Mobile header top padding adds 12 px clearance beyond the previous safe-area spacing. Browser/OS accessibility zoom may override page controls.
