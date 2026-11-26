@@ -10,6 +10,9 @@ Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/ROAD
 - Never commit credentials, private household records, payment details or production configuration. Enforce permissions server-side; never rely on hidden UI.
 - Preserve accessibility, responsive behavior and existing functionality. Report actual tests and any failures; never claim unrun tests passed.
 
+## Multi-household and financial invariants
+Public signup is required, but household membership is private. Verify email through backend-only Resend integration; never expose API keys, send live email in tests or configure production services without approval. Scope every operation to authorized membership and test tenant isolation. Do not hardcode three people, names, household IDs, rent amounts or equal splits. Support selected participants, equal/percentage/fixed shares and exact integer-minor-unit allocation. Keep expenses, obligations and confirmed settlements distinct; do not simulate payment processing.
+
 ## UI contract
 This is a household utility, not a landing page. Show the page title, useful information and the next action. No tagline below the app name, eyebrow labels, welcome essays, generic motivational copy, decorative badges, gradients, glow, glassmorphism, emoji icons or nested cards by default. Do not replace useful labels with clever language. Prefer lists, dividers, clear alignment and restrained typography. Use color to communicate meaning, never as the only signal. Follow docs/DESIGN.md for details.
 
