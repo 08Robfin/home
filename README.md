@@ -2,71 +2,76 @@
 
 # Home.
 
-A household application for shared chores, expenses and shopping. Anyone can register, verify their email and create a private household or accept an invitation.
+A mobile-first app for shared chores, expenses and shopping. Create an account, verify your email and invite the people you live with.
 
-**Status:** First working self-hosted release. Accounts, household permissions and the core workflows are implemented. Test with your residents before relying on the ledger for real obligations.
+[Open Home](https://home.robfin.no) · [Application source](https://github.com/08Robfin/home/tree/feat/household-app) · [Implementation PR](https://github.com/08Robfin/home/pull/1)
 
-## What you can do
+![Home on mobile: household overview, shared expenses in dark mode, and shopping](docs/screenshots/overview.jpg)
 
-| Area | Working behavior |
+*Real screens from the working app, captured with a separate demo household.*
+
+## What works
+
+| Area | What you can do |
 | --- | --- |
-| Accounts | Public registration, email verification, sign-in, password reset, sign-out and reminder preferences |
-| Households | Create and switch households; email invitations; owner, administrator and member roles; revocation; ownership transfer and guarded departure |
-| Chores | One-off or recurring chores, rotating assignments, completion history and accepted swaps |
-| Payments | Purchases and monthly bills; equal, percentage or fixed splits; private receipts; partial repayments and receipt confirmation |
-| Shopping | Shared editable list, quantities, checked items and clear-checked action |
-| Home | Assigned chores, amounts owed, payments to confirm and shopping items |
-| Email | Resend verification, password resets, invitations and opt-in daily due reminders through a separate worker |
-| Data | Household export, activity history and SQLite backups including receipts |
-| Installation | Mobile and desktop layout, dark mode, PWA manifest and static offline shell |
+| Households | Create and switch households, send email invitations, manage roles and transfer ownership |
+| Chores | Assign, rotate and complete chores; request a swap without cluttering the list |
+| Expenses | Split purchases and recurring bills equally, by percentage or fixed amounts; attach private receipts |
+| Repayments | Record partial payments and let the recipient confirm receipt |
+| Shopping | Keep one shared list with quantities and checked items |
+| Accounts | Verified email registration, password reset and opt-in reminders through Resend |
 
-Payments record money sent outside the app. Home does not connect to banks or move money. Sent and receipt confirmed are distinct states. Every share uses integer øre; rounding preserves the exact total.
+The app has light, dark and system appearance, a floating mobile navigation menu and a desktop layout. Household data is private to its members. Home records repayments; it does not move money or connect to a bank.
 
-## Using Home
+![Light and dark appearances of the real Home mobile app](docs/screenshots/appearance.jpg)
 
-Create an account and verify your email, then sign in. Create a household under your chosen name, or open an invitation sent to the email you registered with. Invite other residents in Settings. Each household has its own chores, shopping list and ledger.
+<details>
+<summary><strong>Chores, expense splitting and more screenshots</strong></summary>
 
-Use **Add expense** for furniture, groceries and other shared purchases. Choose **Bill to be paid** for rent or utilities collected by a household member; the optional monthly setting creates future bills. Select participants and check the split preview before saving. After sending money using your bank or payment app, mark the amount as sent; the recipient confirms it.
+![Recurring chores and the percentage split preview](docs/screenshots/expenses.jpg)
 
-Install on iPhone through Safari → Share → Add to Home Screen, or use the browser's install option on Android and desktop. Data changes need connectivity. Private records are never stored in the service-worker cache.
+[All screen captures and their provenance](docs/screenshots/README.md) · [Household switcher](docs/screenshots/mobile-households-light.jpg)
+
+</details>
+
+## Get started
+
+Open [home.robfin.no](https://home.robfin.no), register and verify your email. Create a household or accept an invitation sent to the same address. Use Settings to invite residents and choose reminders. Appearance is available in More and Settings.
+
+On iPhone, use Safari → Share → Add to Home Screen. Android and desktop browsers offer their own install option. Changes require connectivity; private records are not cached for offline access.
 
 ## Development
 
-Requires Node.js 24+. There are no runtime npm dependencies or frontend build step.
+The working application is on `feat/household-app` while [PR #1](https://github.com/08Robfin/home/pull/1) is under review. This main page contains its current documentation and screenshot gallery.
+
+Requires Node.js 24+. No runtime npm dependencies or frontend build step.
 
 ```sh
-git clone https://github.com/08Robfin/home.git
+git clone --branch feat/household-app https://github.com/08Robfin/home.git
 cd home
 node backend/server.mjs
 ```
 
-Open `http://localhost:3000`. Development data is stored in ignored `data/home.sqlite`. Starting the web app alone does not send emails. All test email calls are mocked:
+Open `http://localhost:3000`. Development data goes into ignored `data/home.sqlite`. Starting the web app alone does not send email.
 
 ```sh
 node --test tests/*.test.mjs
 ```
 
-The integration suite exercises real HTTP routes against an isolated database, including token reuse, household isolation, invitation ownership, chore rotation and swaps, repayment confirmation, private receipts, recurring bills, reminders, shopping, CSRF rejection and mail retries.
+Twenty automated checks cover authentication, tenant isolation, invitations, exact allocations, repayments, receipts, recurrence, shopping, CSRF and mail retries. Provider calls are mocked. A separate approved live Gmail smoke test verified delivery and link behavior; its temporary accounts and records were removed.
 
-## Deployment and privacy
+## Running it yourself
 
-Use the Docker Compose template behind Nginx Proxy Manager. Keep the real `.env` and Resend sending credential on the server, outside source control. Only the mail worker receives the credential; the web container and browser do not. TLS, cookie security, input validation, backend authorization and persistent rate limits are part of the implementation.
+Node.js 24 and SQLite run in a dedicated Docker Compose project behind Nginx Proxy Manager. A separate worker sends transactional email through Resend. Only that worker mounts the sending key; credentials stay outside source control and browser code. Daily online backups include records and receipts.
 
-See [operations](docs/OPERATIONS.md) for configuration, backups, restoration, updates and current boundaries. Run `python3 scripts/backup.py /absolute/private/backup-directory` on the Docker host for a verified online snapshot with 30-day retention. Keep off-server backups for disaster recovery.
+See [operations and recovery](https://github.com/08Robfin/home/blob/feat/household-app/docs/OPERATIONS.md) before deploying.
 
-## Repository guide
+## Project documents
 
-| Path | Contents |
-| --- | --- |
-| [frontend/](frontend/) | Browser interface, icons, PWA and stylesheet |
-| [backend/](backend/) | HTTP API, SQLite schema, domain rules and email worker |
-| [tests/](tests/) | Isolated domain and HTTP integration tests |
-| [scripts/](scripts/) | Server backup helper |
-| [docs/PRODUCT.md](docs/PRODUCT.md) | Shared product requirements |
-| [docs/DESIGN.md](docs/DESIGN.md) | Interface conventions |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Implemented architecture and boundaries |
-| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Deployment and recovery |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Completed work and remaining scope |
-| [AGENTS.md](AGENTS.md) | Coding-agent instructions |
+- [Product requirements](docs/PRODUCT.md)
+- [Design rules and primary references](docs/DESIGN.md)
+- [Architecture](https://github.com/08Robfin/home/blob/feat/household-app/docs/ARCHITECTURE.md)
+- [Roadmap and remaining work](https://github.com/08Robfin/home/blob/feat/household-app/docs/ROADMAP.md)
+- [Coding-agent instructions](https://github.com/08Robfin/home/blob/feat/household-app/AGENTS.md)
 
-The SVG screens under `docs/design` remain concepts with illustrative data. Account and household deletion, push notifications, offline editing, furniture ownership, calendar and maintenance tracking are not implemented. See the roadmap before expanding scope. No public license has been selected.
+Account/household deletion, push notifications, offline editing and furniture ownership remain future work. Original SVG concepts are retained under `docs/design` as design history. No public license has been selected.
