@@ -16,7 +16,7 @@
 
 ## Release follow-up
 - [ ] Residents review workflows on their own phones using user-initiated accounts.
-- [ ] Confirm delivery of a user-initiated verification email in the recipient's inbox.
+- [x] Approved live Gmail smoke test: verification, revised invitation, password reset and due reminder reached the Inbox; single-use links and reset session invalidation passed.
 - [ ] Review whether the English interface and role capabilities suit the residents.
 - [ ] Add account and household deletion with agreed handling of shared history.
 - [ ] Extend monitoring and abuse controls before public promotion at scale.

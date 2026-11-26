@@ -30,12 +30,13 @@ export async function passwordHash(password) { if(typeof password!=='string'||pa
 export async function passwordCheck(password,stored) { const [salt,key]=stored.split(':');const supplied=await derive(String(password).slice(0,128),salt,64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return timingSafeEqual(supplied,Buffer.from(key,'hex')); }
 export const escapeHtml=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function enqueue(db,{key,to,subject,body}) { db.prepare('INSERT OR IGNORE INTO mail(id,event_key,recipient,subject,body,next_attempt,created) VALUES(?,?,?,?,?,?,?)').run(id(),key,to,subject,body,now(),now()); }
-export function issueToken(db,{user=null,kind,recipient,household=null,origin}) {
+export function issueToken(db,{user=null,kind,recipient,household=null,origin,inviter=null}) {
   const raw=token(), digest=hash(raw); const expires=now()+(kind==='invite'?7*86400000:kind==='reset'?3600000:86400000);
   db.prepare('DELETE FROM tokens WHERE email=? AND kind=? AND COALESCE(household_id,\'\')=COALESCE(?,\'\')').run(recipient,kind,household);
   db.prepare('INSERT INTO tokens VALUES(?,?,?,?,?,?,?)').run(digest,user,kind,recipient,household,expires,now());
   const link=`${origin}/#${kind}=${raw}`;
-  const subject=kind==='verify'?'Verify your email for Home.':kind==='reset'?'Reset your Home. password':'Invitation to a household on Home.';
-  const body=kind==='invite'?`You have been invited to join a household on Home. Register or sign in with this email address, then open this link. This invitation expires in 7 days.\n\n${link}`:`${kind==='verify'?'Verify your email address':'Reset your password'} using this link. It expires in ${kind==='reset'?'1 hour':'24 hours'}.\n\n${link}\n\nIf you did not request this, you can ignore this email.`;
+  const householdName=kind==='invite'?db.prepare('SELECT name FROM households WHERE id=?').get(household)?.name:null;
+  const subject=kind==='verify'?'Verify your email for Home.':kind==='reset'?'Reset your Home. password':`Join ${householdName} on Home.`;
+  const body=kind==='invite'?`${inviter||'A household member'} invited you to join ${householdName} on Home.\n\n${link}\n\nSign in or register with this email address to accept. This invitation expires in 7 days.\n\nIf you were not expecting this invitation, you can ignore this email.`:`${kind==='verify'?'Verify your email address':'Reset your password'} using this link. It expires in ${kind==='reset'?'1 hour':'24 hours'}.\n\n${link}\n\nIf you did not request this, you can ignore this email.`;
   enqueue(db,{key:`${kind}:${digest}`,to:recipient,subject,body});
 }

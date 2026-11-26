@@ -26,7 +26,9 @@ To restore: stop `app` and `mail-worker`, preserve the current volume, restore a
 
 Back up before an update. Build a new image, run tests, and restart only this Compose project. Do not use `docker compose down -v`; that deletes household data. Keep the previous image and database backup when changing the schema. Version 1 initializes a fresh database; subsequent schema changes need explicit migrations.
 
-Inspect `docker compose ps` and the worker's message-status counts for failures. Logs contain generic failure codes; they must not contain credentials, passwords, email bodies or link tokens. A provider accepting a message is distinct from delivery to a recipient's inbox. Production email delivery must be confirmed through a real user-initiated signup or invitation; the test suite never sends live email.
+Inspect `docker compose ps` and the worker's message-status counts for failures. Logs contain generic failure codes; they must not contain credentials, passwords, email bodies or link tokens. A provider accepting a message is distinct from delivery to a recipient's inbox. The automated suite never sends live email.
+
+An explicitly approved live Gmail smoke test on 2026-11-26 confirmed Inbox receipt for verification, the revised household invitation, password reset and an opt-in due reminder. Gmail reported SPF, DKIM and DMARC passing. The original generic invitation went to Spam; the revision includes the inviter and household name and a clear application action. This is evidence from one mailbox, not a guarantee for every recipient. Continue monitoring delivery and avoid repeatedly resending messages to people who did not request them. The smoke test used temporary accounts and records, which were removed afterward.
 
 ## Current boundaries
 
