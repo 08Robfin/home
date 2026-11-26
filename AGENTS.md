@@ -1,7 +1,8 @@
 # AI coding agent instructions
 
 ## Start here
-Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/ROADMAP.md and docs/DECISIONS.md. The repository is in planning only. Do not scaffold or implement anything unless explicitly requested. Treat proposed decisions as proposals, not requirements.
+Read [the AI and maintainer handoff](docs/AI_HANDOFF.md) for implemented behavior, design lessons, security boundaries, current branch state and the PR/integration workflow. Keep it current when those conventions change. Use `.github/pull_request_template.md` and synchronize the README with shipped behavior; use demo records only in public captures.
+Read README.md, docs/PRODUCT.md, docs/DESIGN.md, docs/ARCHITECTURE.md, docs/OPERATIONS.md, docs/ROADMAP.md and docs/DECISIONS.md. A first working release exists. Inspect the implemented architecture before making changes. Treat remaining proposals as proposals, not requirements.
 
 ## Working rules
 - Implement only the requested issue. Inspect existing code before changing it; keep changes small and reviewable.
