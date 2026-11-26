@@ -99,3 +99,7 @@ On iOS/iPadOS 16.4+, push requires a Home Screen web app and permission requeste
 ## Remaining work, honestly
 
 Real iPhone Home Screen installation and APNs delivery need device verification. Account/household deletion and retention UI, offline conflict resolution, richer event notifications, furniture ownership and off-server disaster-recovery verification are separate work. Resend webhook-based bounce/complaint monitoring is not implemented. No test or design guideline makes browser/OS delivery unconditional.
+
+## 2026-11-26: fixed-scale navigation follow-up
+
+The owner requested no horizontal page/menu scrolling and no in-app touch zoom. Root and nested scroll surfaces allow vertical panning only; dialogs and form grids must reflow rather than hide overflowing controls. Keep date fields constrained, controls at 16 px minimum text, long names/amounts wrapping, and dialog scroll position reset when changing menus. A visualViewport listener sizes dialogs around the software keyboard. The header has 12 px extra top clearance to avoid the iOS top blur. OS accessibility overrides cannot be disabled reliably. Notification testing is deliberately visible before enabling push and uses the actual server outbox after a permission gesture. These explicit preferences supersede the earlier Safari checklist’s zoom-preservation guidance.

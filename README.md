@@ -22,7 +22,7 @@ A mobile-first app for shared chores, expenses and shopping. Create an account, 
 | Accounts | Verified email registration and password reset through Resend |
 | Notifications | Email and per-device push, chores/payments, 0–14 days before, local time, time zone and optional overdue reminders |
 
-The app has light, dark and system appearance, a floating mobile navigation menu and a desktop layout. Household data is private to its members. Home records repayments; it does not move money or connect to a bank.
+The app has light, dark and system appearance, a floating mobile navigation menu and a desktop layout. Phone pages and menus use vertical scrolling with fixed-scale touch navigation. Household data is private to its members. Home records repayments; it does not move money or connect to a bank.
 
 ![Light and dark appearances of the real Home mobile app](docs/screenshots/appearance.jpg)
 
@@ -69,7 +69,7 @@ See [operations and recovery](https://github.com/08Robfin/home/blob/feat/househo
 
 ## Notifications on iPhone
 
-Add Home to your Home Screen from Safari, keep **Open as Web App** enabled if shown, and launch it from the new icon. In **Settings → Notifications**, save your schedule and tap **Enable on this device**. Push requires iOS/iPadOS 16.4+ and your permission. Use **Send test notification** after enabling it. Desktop tests cover the protocol; real iPhone delivery still needs device verification.
+Add Home to your Home Screen from Safari, keep **Open as Web App** enabled if shown, and launch it from the new icon. In **Settings → Notifications**, save your schedule and tap **Enable on this device**. Push requires iOS/iPadOS 16.4+ and your permission. Use **Send test notification** to request permission if needed and send a test through the server. Desktop tests cover the protocol; real iPhone delivery still needs device verification.
 
 ![Notification preferences in light and dark mode](docs/screenshots/notifications.jpg)
 

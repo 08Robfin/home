@@ -18,7 +18,7 @@ Notifications are a daily summary, not an exact alarm. Connectivity, Focus/Do No
 
 - Install, cold launch, background and reopen; confirm sign-in and selected household survive normal relaunch.
 - Inspect light/dark/system appearance, portrait/landscape safe areas and the home indicator. Check the dock stays fixed across all tabs and never covers the last item after scrolling.
-- Open forms with the keyboard visible; confirm focused input and save/cancel actions remain reachable, pinch zoom remains available and text inputs do not unexpectedly zoom.
+- Open forms with the keyboard visible; confirm focused input and save/cancel actions remain reachable, touch pinch/double-tap zoom is suppressed as requested and text inputs do not unexpectedly zoom.
 - Navigate with VoiceOver and larger text. Check labels, selected states, focus return and dialog dismissal.
 - Enable from a tap, receive a test while backgrounded/closed, tap to reopen Home and inspect blocked permission. Disable, sign out and reset password; verify subscriptions are revoked as documented.
 - Save a near-future reminder schedule using synthetic data; verify the correct channel/category, local time and lead date, with no repeated scheduling after worker restart.
@@ -34,3 +34,9 @@ Automated coverage includes the RFC encryption vector, signature verification, t
 - [WebKit: safe-area layout](https://webkit.org/blog/7929/designing-websites-for-iphone-x/)
 - [Apple: sending Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers)
 - [web.dev: service-worker updates](https://web.dev/learn/pwa/service-workers)
+
+## Fixed-scale mobile layout — 26 November 2026
+
+The owner explicitly requested vertical-only navigation and disabled touch zoom. The viewport is fixed at scale 1, scroll surfaces use pan-y, and Safari gesture handlers suppress pinch zoom. Form controls use at least 16 px text to avoid focus-triggered zoom. The OS/browser may retain accessibility zoom overrides; page code cannot promise to disable those. Menus constrain width, wrap long content and scroll vertically within the visible keyboard-adjusted viewport. The mobile header has 12 px extra top clearance beyond its previous safe-area padding.
+
+Send test notification is visible in the push section before subscription; its tap requests permission when necessary and then queues an encrypted server-worker test. Unsupported or non-installed iPhone browsers show installation guidance instead.
